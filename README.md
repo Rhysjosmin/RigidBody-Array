@@ -2,10 +2,8 @@
 This is An Addon To create An Array of cubes that can participate in a physics simulation
 
 
-to install open the scripting workspace of blender 
-
-open the pythonfile
-go to text-- then click on register --- then run the file-----
+install it the way you normally install addons
+ by going to edit--->prefrences------>add-ons------->install---->locate the physics array.py file click install and enable it
 
 
 to search for it:
@@ -13,6 +11,12 @@ to search for it:
 go to the f3 or spacebar menu(depending on your user prefrences)
 
 search for "RigidBody array"
+
+or
+
+press 'n' on your keyboard and go to the physics array tab and click on the "Default Array" Button
+
+properties are in the redo panel
 
 
 
