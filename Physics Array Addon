@@ -1,22 +1,133 @@
 bl_info = {
     "name":"Physics Array",
     "author":"Rhys Rodrigues",
-    "version": (1, 0),
+    "version": (1, 1),
     "blender": (2,80,0),
     "category":"Mesh",
     "location":"Operator Search",
-    "description":"add a array of cubes which can particiate in the physics simulation",
+    "description":"arrays the selected object and adds a rbd to it",
     "warning":"",
     "doc_url":"",
     "tracker_url": "",
 }
-import bpy
- 
 
-class MESH_OT_rigidrody_array(bpy.types.Operator):
+import bpy
+from numpy.random import seed
+from numpy.random import rand
+from numpy.random import randint
+
+
+shape='CONVEX_HULL'
+
+class MESH_OT_new_array(bpy.types.Operator):
      """ Add A RigidBody array"""
      bl_idname="mesh.rigidbody_array"
      bl_label="RigidBody array"
+     bl_options ={'REGISTER','UNDO'}
+
+     x: bpy.props.IntProperty(        
+        name="x",
+        description="Number Of Cubes In The X Direction",
+        default=2,
+        min=1 , soft_max =5
+      )
+
+     y: bpy.props.IntProperty(        
+        name="y",
+        description="Number Of Cubes In The Y Direction",
+        default=2,
+        min=1 , soft_max =5
+      )
+     z: bpy.props.IntProperty(        
+        name="z",
+        description="Number Of Cubes In The Z Direction",
+        default=3,
+        min=1 , soft_max =5
+      )
+    
+     size: bpy.props.FloatProperty(        
+        name="size",
+        description="Number Of Cubes In The X Direction",
+        default=4,
+        soft_min=2 
+      )
+
+     shape: bpy.props.StringProperty(        
+        name="rigid body shape",
+        description="Collision Shape",
+        default='CONVEX_HULL',
+      )
+      
+     linked_duplicate: bpy.props.BoolProperty(        
+        name="Linked Duplicate",
+        description="should the objects be linked saves memory" ,
+        default= True ,
+      )
+      
+     Random_Rotation: bpy.props.BoolProperty(        
+        name="Randomize Rotation",
+        description="gives all arrayed objects a random rotation" ,
+        default= False
+      )   
+     rotationseed: bpy.props.IntProperty(        
+        name="Rotation Seed",
+        description="Seed for Random Rotation" ,
+        default= 1,
+        min=0
+
+      )
+
+     def execute(self, context):
+         def makerbd(rbd_collision_shape):
+             bpy.ops.rigidbody.object_add()
+             bpy.context.object.rigid_body.collision_shape = rbd_collision_shape
+
+    
+         def rand_rotation(randomrot):
+             
+             if randomrot == True:
+                seed(self.rotationseed)
+                bpy.ops.transform.trackball(value=(rand(2)))
+                bpy.ops.transform.rotate(value=rand(1), orient_axis='Z', orient_type='VIEW', orient_matrix=((rand(3)), (rand(3)), (rand(3))))
+
+
+
+         def array(x,y,z,dist,rbd_co_shape):
+             makerbd(rbd_co_shape)
+             olx=bpy.context.active_object.location[0]
+             oly=bpy.context.active_object.location[1]
+             olz=bpy.context.active_object.location[2] 
+             for repeat2 in range(z):
+                 for repeat2 in range(y):
+                     for repeat1 in range(x-1):
+                         rand_rotation(self.Random_Rotation)
+                         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":self.linked_duplicate, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(dist, 0, 0)}) 
+                         rand_rotation(self.Random_Rotation)               
+                     bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":self.linked_duplicate, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(dist, 0, 0)})                
+                     bpy.ops.transform.translate(value=(olx-bpy.context.active_object.location[0], dist, 0))
+                 bpy.ops.transform.translate(value=(olx-bpy.context.active_object.location[0], oly-bpy.context.active_object.location[1], dist))
+             bpy.ops.object.delete(use_global=False)
+
+
+         array(self.x,self.y,self.z,self.size,self.shape)
+         return {"FINISHED"} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+class MESH_OT_cube_array(bpy.types.Operator):
+     """ Add A cube array"""
+     bl_idname="mesh.cube_array"
+     bl_label="cube array"
      bl_options ={'REGISTER','UNDO'}
      
 
@@ -219,35 +330,133 @@ class MESH_OT_rigidrody_array(bpy.types.Operator):
             bpy.context.object.rigid_body.type = 'PASSIVE'
                    
                                                         
-            return {"FINISHED"}                                                
-################################################################################################################                                                     
-class VIEW3D_PT_rigidrody_array(bpy.types.Panel):
+        return {"FINISHED"} 
+
+
+
+
+
+class MESH_OT_ground_plane(bpy.types.Operator):
+     """ Add A Ground Plane"""
+     bl_idname="mesh.ground_plane"
+     bl_label="ground plane"
+     bl_options ={'REGISTER','UNDO'}
+     
+     Ground_size: bpy.props.FloatProperty(
+        name="Ground Size",
+        description="Size Of the Ground Plane",
+        default=1,
+        step=10,
+        
+     )
+     
+     def execute(self, context):
+         
+         def makerbd():                                                     #makes the object a ridgid body
+            bpy.ops.rigidbody.object_add()
+            bpy.context.object.rigid_body.collision_shape = 'BOX'          #sets the rigid body collision shape
+            bpy.context.object.rigid_body.type = 'PASSIVE'
+
+
+                  
+         bpy.ops.mesh.primitive_plane_add(size=(self.Ground_size*10)+100, enter_editmode=False, align='WORLD', location=(0, 0, 0))
+         makerbd()
+         return {"FINISHED"} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class VIEW3D_PT_ground_plane(bpy.types.Panel):
      
      bl_space_type='VIEW_3D'
      bl_region_type='UI'
      bl_category ='Physics Array'
-     bl_label='RigidBody array'
+     bl_label='Start'
+
+     def draw(self, context):
+        col = self.layout.column()
+        col.operator("mesh.ground_plane",
+            text="Add Ground Plane",
+            icon="MESH_PLANE"
+            )
+
+
+
+
+class VIEW3D_PT_new_array(bpy.types.Panel):
+     
+     bl_space_type='VIEW_3D'
+     bl_region_type='UI'
+     bl_category ='Physics Array'
+     bl_label='Modify'
 
      def draw(self, context):
         col = self.layout.column()
         col.operator("mesh.rigidbody_array",
-            text="Default Array",
+            text="Selected Mesh Array",
+            icon="DUPLICATE"
+            )
+            
+class VIEW3D_PT_cube_array(bpy.types.Panel):
+     
+     bl_space_type='VIEW_3D'
+     bl_region_type='UI'
+     bl_category ='Physics Array'
+     bl_label='Create'
+
+     def draw(self, context):
+        col = self.layout.column()
+        col.operator("mesh.cube_array",
+            text="Create Cube Array",
             icon="MOD_ARRAY"
             )
             
-    
-                            
-                            
-        
-################################################################################################################    
+
 
 def register():
-    bpy.utils.register_class(MESH_OT_rigidrody_array)
-    bpy.utils.register_class(VIEW3D_PT_rigidrody_array)
+    bpy.utils.register_class(VIEW3D_PT_ground_plane)
+    bpy.utils.register_class(MESH_OT_cube_array)
+    bpy.utils.register_class(VIEW3D_PT_new_array)
+    bpy.utils.register_class(VIEW3D_PT_cube_array)
+    bpy.utils.register_class(MESH_OT_new_array)
+    
+    bpy.utils.register_class(MESH_OT_ground_plane)
+    
          
 def unregister():
-    bpy.utils.unregister_class(MESH_OT_rigidrody_array)       
-    bpy.utils.unregister_class(VIEW3D_PT_rigidrody_array) 
+    bpy.utils.unregister_class(VIEW3D_PT_ground_plane) 
+    bpy.utils.unregister_class(MESH_OT_new_array) 
+    bpy.utils.unregister_class(VIEW3D_PT_new_array)
+    bpy.utils.unregister_class(VIEW3D_PT_cube_array)
+    bpy.utils.unregister_class(MESH_OT_cube_array)
+    
+    bpy.utils.unregister_class(MESH_OT_ground_plane)      
+     
 
+
+    
+    
+
+        
+    
+   
 
 
