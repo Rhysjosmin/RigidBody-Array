@@ -1,0 +1,128 @@
+#new code allows you to do the same operations but for any meshes and not limited to a cube
+
+bl_info = {
+    "name":"Physics Array",
+    "author":"Rhys Rodrigues",
+    "version": (1, 1),
+    "blender": (2,80,0),
+    "category":"Mesh",
+    "location":"Operator Search",
+    "description":"arrays the selected object and adds a rbd to it",
+    "warning":"",
+    "doc_url":"",
+    "tracker_url": "",
+}
+
+import bpy
+
+shape='CONVEX_HULL'
+
+class MESH_OT_new_array(bpy.types.Operator):
+     """ Add A RigidBody array"""
+     bl_idname="mesh.rigidbody_array"
+     bl_label="RigidBody array"
+     bl_options ={'REGISTER','UNDO'}
+
+     x: bpy.props.IntProperty(        
+        name="x",
+        description="Number Of Cubes In The X Direction",
+        default=2,
+        min=1 , soft_max =5
+      )
+
+     y: bpy.props.IntProperty(        
+        name="y",
+        description="Number Of Cubes In The Y Direction",
+        default=2,
+        min=1 , soft_max =5
+      )
+     z: bpy.props.IntProperty(        
+        name="z",
+        description="Number Of Cubes In The Z Direction",
+        default=3,
+        min=1 , soft_max =5
+      )
+    
+     size: bpy.props.IntProperty(        
+        name="size",
+        description="Number Of Cubes In The X Direction",
+        default=4,
+        min=1 , soft_max =5
+      )
+
+     shape: bpy.props.StringProperty(        
+        name="rigid body shape",
+        description="Collision Shape",
+        default='CONVEX_HULL',
+      )
+
+    
+
+     def execute(self, context):
+         def makerbd(rbd_collision_shape):
+             bpy.ops.rigidbody.object_add()
+             bpy.context.object.rigid_body.collision_shape = rbd_collision_shape
+
+
+
+
+
+         def array(x,y,z,dist,rbd_co_shape):
+             makerbd(rbd_co_shape)
+             olx=bpy.context.active_object.location[0]
+             oly=bpy.context.active_object.location[1]
+             olz=bpy.context.active_object.location[2]    
+             for repeat3 in range(z):
+                 for repeat2 in range(y):
+                     for repeat1 in range(x-1):
+                         bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":True, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(dist,0 , 0)})
+                     bpy.ops.object.duplicate_move(OBJECT_OT_duplicate={"linked":True, "mode":'TRANSLATION'}, TRANSFORM_OT_translate={"value":(dist,0 , 0)})
+                     bpy.ops.transform.translate(value=(olx-bpy.context.active_object.location[0], dist, 0))
+                 bpy.ops.transform.translate(value=(olx-bpy.context.active_object.location[0], oly-bpy.context.active_object.location[1], dist))
+             bpy.ops.object.delete(use_global=False, confirm=False)
+     
+
+         array(self.x,self.y,self.z,self.size,self.shape)
+         return {"FINISHED"} 
+
+
+class VIEW3D_PT_new_array(bpy.types.Panel):
+     
+     bl_space_type='VIEW_3D'
+     bl_region_type='UI'
+     bl_category ='Physics Array'
+     bl_label='RigidBody array'
+
+     def draw(self, context):
+        col = self.layout.column()
+        col.operator("mesh.rigidbody_array",
+            text="Default Array",
+            icon="MOD_ARRAY"
+            )
+            
+
+
+
+
+
+
+
+def register():
+    bpy.utils.register_class(MESH_OT_new_array)
+    
+    
+         
+def unregister():
+    bpy.utils.unregister_class(MESH_OT_new_array)
+    
+           
+     
+
+
+    
+    
+
+        
+    
+   
+
